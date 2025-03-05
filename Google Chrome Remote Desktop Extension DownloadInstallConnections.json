@@ -1,0 +1,77 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/90839756-4090-4066-aeb0-a83d08e5d222')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/90839756-4090-4066-aeb0-a83d08e5d222')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "apiVersion": "2023-12-01-preview",
+            "properties": {
+                "displayName": "Google Chrome Remote Desktop Extension Download/Install/Connections",
+                "description": "This use case is designed to catch any activity surrounding the usage of Google Chrome Remote Desktop browser extension. Looking specifically for the initiating process .msi file and SHA1 & SHA256 file hashes.",
+                "severity": "Low",
+                "enabled": true,
+                "query": "let suspicious_filename = \"chromeremotedesktop.msi\";\r\nlet suspicious_hashes = dynamic([\"684c9239714e251137ae8961a4dca208df9b84e9\", \"879697a2a2dee048f753aeed2c5b36d8132a86dadaffc1e7642296e467e1678c\"]);\r\nlet suspicious_keyword = \"chrome remote desktop\";\r\nunion \r\n    DeviceProcessEvents,   \r\n    DeviceNetworkEvents,   \r\n    DeviceEvents,          \r\n    DeviceRegistryEvents,  \r\n    DeviceFileEvents       \r\n| where FileName has suspicious_filename \r\n   or SHA1 in (suspicious_hashes) \r\n   or SHA256 in (suspicious_hashes)\r\n   or InitiatingProcessVersionInfoProductName has suspicious_keyword\r\n   or AdditionalFields has suspicious_keyword  \r\n| project TimeGenerated, DeviceName, InitiatingProcessAccountName, InitiatingProcessVersionInfoProductName, FileName, SHA1, SHA256, \r\n         FolderPath, ProcessCommandLine, InitiatingProcessFolderPath, RemoteIP, RemotePort, RegistryKey, RegistryValueName\r\n| order by TimeGenerated desc\r\n",
+                "queryFrequency": "PT6H",
+                "queryPeriod": "PT6H",
+                "triggerOperator": "GreaterThan",
+                "triggerThreshold": 0,
+                "suppressionDuration": "PT5H",
+                "suppressionEnabled": false,
+                "startTimeUtc": null,
+                "tactics": [],
+                "techniques": [],
+                "subTechniques": [],
+                "alertRuleTemplateName": null,
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": true,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "PT6H",
+                        "matchingMethod": "AllEntities",
+                        "groupByEntities": [],
+                        "groupByAlertDetails": [],
+                        "groupByCustomDetails": []
+                    }
+                },
+                "eventGroupingSettings": {
+                    "aggregationKind": "SingleAlert"
+                },
+                "alertDetailsOverride": {
+                    "alertDynamicProperties": []
+                },
+                "customDetails": null,
+                "entityMappings": [
+                    {
+                        "entityType": "Account",
+                        "fieldMappings": [
+                            {
+                                "identifier": "Name",
+                                "columnName": "InitiatingProcessAccountName"
+                            }
+                        ]
+                    },
+                    {
+                        "entityType": "Host",
+                        "fieldMappings": [
+                            {
+                                "identifier": "FullName",
+                                "columnName": "DeviceName"
+                            }
+                        ]
+                    }
+                ],
+                "sentinelEntitiesMappings": null,
+                "templateVersion": null
+            }
+        }
+    ]
+}
